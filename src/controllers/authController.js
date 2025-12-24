@@ -30,8 +30,13 @@ const register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // Generate OTP
-        const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6 digit OTP
+        // Generate 4-digit OTP excluding 5 and 6
+        const allowedDigits = '01234789';
+        let otp = '';
+        for (let i = 0; i < 4; i++) {
+            otp += allowedDigits[Math.floor(Math.random() * allowedDigits.length)];
+        }
+
         const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
         // Create user
