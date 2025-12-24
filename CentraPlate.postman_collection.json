@@ -119,6 +119,34 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get All Users",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/all-users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"all-users"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -214,6 +242,24 @@
 								"plates",
 								"search",
 								"ABC-9999"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Plates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/plates/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plates",
+								"all"
 							]
 						}
 					},

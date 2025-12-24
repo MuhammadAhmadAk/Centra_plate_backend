@@ -104,10 +104,14 @@ const licensePlateRoutes = require('./routes/licensePlateRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/plates', licensePlateRoutes);
 
+const seedAdmin = require('./utils/seedAdmin');
 const PORT = process.env.PORT || 3000;
 
 // Initialize DB and then start server
-db.bootstrapDatabase().then(() => {
+db.bootstrapDatabase().then(async () => {
+    // Seed Admin
+    await seedAdmin();
+
     server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });

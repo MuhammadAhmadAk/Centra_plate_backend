@@ -23,8 +23,20 @@ const findLicensePlateByUserId = async (userId) => {
     return result.rows[0];
 };
 
+const getAllLicensePlates = async () => {
+    const query = `
+        SELECT lp.id, lp.plate_number, lp.created_at,
+               u.id as user_id, u.full_name, u.email, u.role, u.is_verified
+        FROM license_plates lp
+        JOIN users u ON lp.user_id = u.id
+    `;
+    const result = await db.query(query);
+    return result.rows;
+};
+
 module.exports = {
     createLicensePlate,
     findLicensePlateByNumber,
     findLicensePlateByUserId,
+    getAllLicensePlates,
 };

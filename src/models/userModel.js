@@ -35,10 +35,17 @@ const findUserById = async (id) => {
     return result.rows[0];
 };
 
+const findAllUsers = async () => {
+    const query = 'SELECT id, full_name, email, role, is_verified, created_at, otp_expires_at FROM users';
+    const result = await db.query(query);
+    return result.rows;
+};
+
 module.exports = {
     createUser,
     findUserByEmail,
     findUserById,
     verifyUser,
     updateUserOtp,
+    findAllUsers,
 };

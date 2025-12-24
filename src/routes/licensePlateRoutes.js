@@ -12,4 +12,7 @@ router.get('/my-plate', authenticateToken, licensePlateController.getMyPlate);
 // I'll make it protected so you need to be logged in to search.
 router.get('/search/:plateNumber', authenticateToken, licensePlateController.searchPlate);
 
+// Public route to get all plates
+router.get('/all', licensePlateController.getAllPlates);
+
 module.exports = router;

@@ -58,8 +58,19 @@ const getMyPlate = async (req, res) => {
     }
 }
 
+const getAllPlates = async (req, res) => {
+    try {
+        const plates = await licensePlateModel.getAllLicensePlates();
+        res.status(200).json({ plates });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error fetching all plates' });
+    }
+};
+
 module.exports = {
     assignPlate,
     searchPlate,
-    getMyPlate
+    getMyPlate,
+    getAllPlates
 };
