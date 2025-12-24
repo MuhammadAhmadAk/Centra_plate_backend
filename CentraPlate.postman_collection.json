@@ -1,0 +1,237 @@
+{
+	"info": {
+		"_postman_id": "b3f3b9a2-4c4f-4d3a-867c-123456789abc",
+		"name": "Centra Plate API",
+		"description": "API collection for Centra Plate Backend deployed on Koyeb.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fullName\": \"Tariq Test\",\n    \"email\": \"tariq@example.com\",\n    \"password\": \"password123\",\n    \"plateNumber\": \"XYZ-7890\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify OTP",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"authToken\", jsonData.token);",
+									"    pm.globals.set(\"authToken\", jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"tariq@example.com\",\n    \"otp\": \"123456\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/verify-otp",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"verify-otp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.token) {",
+									"    pm.environment.set(\"authToken\", jsonData.token);",
+									"    pm.globals.set(\"authToken\", jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"tariq@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "License Plates",
+			"item": [
+				{
+					"name": "Assign Plate",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"plateNumber\": \"ABC-9999\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/plates/assign",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plates",
+								"assign"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Plate",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/plates/my-plate",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plates",
+								"my-plate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Plate",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/plates/search/ABC-9999",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"plates",
+								"search",
+								"ABC-9999"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

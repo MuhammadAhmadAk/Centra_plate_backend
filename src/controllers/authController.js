@@ -4,10 +4,11 @@ const userModel = require('../models/userModel');
 require('dotenv').config();
 
 const sendEmail = require('../utils/sendEmail');
+const licensePlateModel = require('../models/licensePlateModel');
 
 const register = async (req, res) => {
     try {
-        const { fullName, email, password } = req.body;
+        const { fullName, email, password, plateNumber } = req.body;
 
         // Check if user exists
         const existingUser = await userModel.findUserByEmail(email);
@@ -15,6 +16,14 @@ const register = async (req, res) => {
             // Optional: If user exists but not verified, we could resend OTP here.
             // For now, strict check.
             return res.status(400).json({ message: 'User already exists' });
+        }
+
+        // Validate Plate if provided
+        if (plateNumber) {
+            const existingPlate = await licensePlateModel.findLicensePlateByNumber(plateNumber);
+            if (existingPlate) {
+                return res.status(400).json({ message: 'License plate already taken' });
+            }
         }
 
         // Hash password
@@ -28,13 +37,26 @@ const register = async (req, res) => {
         // Create user
         const newUser = await userModel.createUser(fullName, email, passwordHash, 'user', otp, otpExpiresAt);
 
+        // Assign Plate if provided
+        let assignedPlate = null;
+        if (plateNumber) {
+            try {
+                assignedPlate = await licensePlateModel.createLicensePlate(newUser.id, plateNumber);
+            } catch (plateErr) {
+                console.error("Error assigning plate during registration:", plateErr);
+                // Note: User is created but plate failed. We won't rollback user here for simplicity,
+                // but user will have to retry assigning plate later.
+            }
+        }
+
         // Send OTP Email
         await sendEmail(email, 'Your Verification Code', `Your OTP code is ${otp}. It expires in 10 minutes.`);
 
         res.status(201).json({
             message: 'User registered successfully. Please verify your email with the OTP sent.',
             userId: newUser.id,
-            email: newUser.email
+            email: newUser.email,
+            plate: assignedPlate ? assignedPlate.plate_number : null
         });
 
     } catch (err) {
