@@ -32,11 +32,11 @@ class SocketService {
 
   // Initialize Connection
   void initConnection(String userId) {
-    // Replace with your actual backend URL (e.g., 10.0.2.2 for Android Emulator)
-    const String backendUrl = 'http://192.168.1.5:3000'; 
+    // Production URL (Koyeb)
+    const String backendUrl = 'https://required-minetta-syntaxsoftwarehouse-63c67cf1.koyeb.app/'; 
 
     socket = IO.io(backendUrl, <String, dynamic>{
-      'transports': ['websocket'],
+      'transports': ['websocket'], // 'polling' might be needed if websocket connection fails initially
       'autoConnect': false,
     });
 
