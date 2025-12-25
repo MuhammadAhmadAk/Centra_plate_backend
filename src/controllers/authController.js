@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const sendEmail = require('../utils/sendEmail');
 const licensePlateModel = require('../models/licensePlateModel');
+const { sendSuccess, sendError } = require('../utils/responseHandler');
 
 const register = async (req, res) => {
     try {
@@ -15,14 +16,14 @@ const register = async (req, res) => {
         if (existingUser) {
             // Optional: If user exists but not verified, we could resend OTP here.
             // For now, strict check.
-            return res.status(400).json({ message: 'User already exists' });
+            return sendError(res, 400, 'User already exists');
         }
 
         // Validate Plate if provided
         if (plateNumber) {
             const existingPlate = await licensePlateModel.findLicensePlateByNumber(plateNumber);
             if (existingPlate) {
-                return res.status(400).json({ message: 'License plate already taken' });
+                return sendError(res, 400, 'License plate already taken');
             }
         }
 
@@ -57,8 +58,7 @@ const register = async (req, res) => {
         // Send OTP Email
         await sendEmail(email, 'Your Verification Code', `Your OTP code is ${otp}. It expires in 10 minutes.`);
 
-        res.status(201).json({
-            message: 'User registered successfully. Please verify your email with the OTP sent.',
+        return sendSuccess(res, 201, 'User registered successfully. Please verify your email with the OTP sent.', {
             userId: newUser.id,
             email: newUser.email,
             plate: assignedPlate ? assignedPlate.plate_number : null
@@ -66,7 +66,7 @@ const register = async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error during registration' });
+        return sendError(res, 500, 'Server error during registration', err);
     }
 };
 
@@ -76,19 +76,19 @@ const verifyOtp = async (req, res) => {
 
         const user = await userModel.findUserByEmail(email);
         if (!user) {
-            return res.status(400).json({ message: 'User not found' });
+            return sendError(res, 400, 'User not found');
         }
 
         if (user.is_verified) {
-            return res.status(400).json({ message: 'User already verified' });
+            return sendError(res, 400, 'User already verified');
         }
 
         if (user.otp !== otp) {
-            return res.status(400).json({ message: 'Invalid OTP' });
+            return sendError(res, 400, 'Invalid OTP');
         }
 
         if (new Date() > new Date(user.otp_expires_at)) {
-            return res.status(400).json({ message: 'OTP expired' });
+            return sendError(res, 400, 'OTP expired');
         }
 
         // Verify User
@@ -101,8 +101,7 @@ const verifyOtp = async (req, res) => {
             { expiresIn: '1d' }
         );
 
-        res.status(200).json({
-            message: 'Email verified successfully',
+        return sendSuccess(res, 200, 'Email verified successfully', {
             user: {
                 id: verifiedUser.id,
                 fullName: verifiedUser.full_name,
@@ -115,7 +114,7 @@ const verifyOtp = async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error during verification' });
+        return sendError(res, 500, 'Server error during verification', err);
     }
 };
 
@@ -126,17 +125,17 @@ const login = async (req, res) => {
         // Find user
         const user = await userModel.findUserByEmail(email);
         if (!user) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return sendError(res, 400, 'Invalid credentials');
         }
 
         if (!user.is_verified) {
-            return res.status(403).json({ message: 'Please verify your email first.' });
+            return sendError(res, 403, 'Please verify your email first.');
         }
 
         // Check password
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Invalid credentials' });
+            return sendError(res, 400, 'Invalid credentials');
         }
 
         // Generate token
@@ -146,8 +145,7 @@ const login = async (req, res) => {
             { expiresIn: '1d' }
         );
 
-        res.status(200).json({
-            message: 'Login successful',
+        return sendSuccess(res, 200, 'Login successful', {
             user: {
                 id: user.id,
                 fullName: user.full_name,
@@ -156,19 +154,20 @@ const login = async (req, res) => {
             },
             token,
         });
+
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error during login' });
+        return sendError(res, 500, 'Server error during login', err);
     }
 };
 
 const getAllUsers = async (req, res) => {
     try {
         const users = await userModel.findAllUsers();
-        res.status(200).json({ users });
+        return sendSuccess(res, 200, 'Users retrieved successfully', { users });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error fetching users' });
+        return sendError(res, 500, 'Server error fetching users', err);
     }
 };
 

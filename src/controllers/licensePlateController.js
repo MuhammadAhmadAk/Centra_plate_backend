@@ -1,4 +1,5 @@
 const licensePlateModel = require('../models/licensePlateModel');
+const { sendSuccess, sendError } = require('../utils/responseHandler');
 
 const assignPlate = async (req, res) => {
     try {
@@ -8,22 +9,22 @@ const assignPlate = async (req, res) => {
         // Check if user already has a plate
         const existingUserPlate = await licensePlateModel.findLicensePlateByUserId(userId);
         if (existingUserPlate) {
-            return res.status(400).json({ message: 'User already has a license plate assigned' });
+            return sendError(res, 400, 'User already has a license plate assigned');
         }
 
         // Check if plate is already taken
         const existingPlate = await licensePlateModel.findLicensePlateByNumber(plateNumber);
         if (existingPlate) {
-            return res.status(400).json({ message: 'License plate already taken' });
+            return sendError(res, 400, 'License plate already taken');
         }
 
         // Assign plate
         const newPlate = await licensePlateModel.createLicensePlate(userId, plateNumber);
-        res.status(201).json({ message: 'License plate assigned successfully', plate: newPlate });
+        return sendSuccess(res, 201, 'License plate assigned successfully', { plate: newPlate });
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error during plate assignment' });
+        return sendError(res, 500, 'Server error during plate assignment', err);
     }
 };
 
@@ -33,13 +34,13 @@ const searchPlate = async (req, res) => {
         const plate = await licensePlateModel.findLicensePlateByNumber(plateNumber);
 
         if (!plate) {
-            return res.status(404).json({ message: 'License plate not found' });
+            return sendError(res, 404, 'License plate not found');
         }
 
-        res.status(200).json({ plate });
+        return sendSuccess(res, 200, 'License plate found', { plate });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error during search' });
+        return sendError(res, 500, 'Server error during search', err);
     }
 };
 
@@ -49,22 +50,22 @@ const getMyPlate = async (req, res) => {
         const plate = await licensePlateModel.findLicensePlateByUserId(userId);
 
         if (!plate) {
-            return res.status(404).json({ message: 'No license plate assigned to this user' });
+            return sendError(res, 404, 'No license plate assigned to this user');
         }
-        res.status(200).json({ plate });
+        return sendSuccess(res, 200, 'User plate retrieved', { plate });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error fetching plate' });
+        return sendError(res, 500, 'Server error fetching plate', err);
     }
 }
 
 const getAllPlates = async (req, res) => {
     try {
         const plates = await licensePlateModel.getAllLicensePlates();
-        res.status(200).json({ plates });
+        return sendSuccess(res, 200, 'All plates retrieved', { plates });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: 'Server error fetching all plates' });
+        return sendError(res, 500, 'Server error fetching all plates', err);
     }
 };
 
