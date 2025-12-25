@@ -102,11 +102,13 @@ const verifyOtp = async (req, res) => {
         );
 
         return sendSuccess(res, 200, 'Email verified successfully', {
-            id: verifiedUser.id,
-            fullName: verifiedUser.full_name,
-            email: verifiedUser.email,
-            role: verifiedUser.role,
-            isVerified: verifiedUser.is_verified,
+            user: {
+                id: verifiedUser.id,
+                fullName: verifiedUser.full_name,
+                email: verifiedUser.email,
+                role: verifiedUser.role,
+                isVerified: verifiedUser.is_verified,
+            },
             token,
         });
 
@@ -144,10 +146,12 @@ const login = async (req, res) => {
         );
 
         return sendSuccess(res, 200, 'Login successful', {
-            id: user.id,
-            fullName: user.full_name,
-            email: user.email,
-            role: user.role,
+            user: {
+                id: user.id,
+                fullName: user.full_name,
+                email: user.email,
+                role: user.role,
+            },
             token,
         });
 

@@ -15,7 +15,11 @@ const sendSuccess = (res, statusCode, message, data = null) => {
     };
 
     if (data !== null && data !== undefined) {
-        response.data = data;
+        if (typeof data === 'object' && !Array.isArray(data)) {
+            Object.assign(response, data);
+        } else {
+            response.data = data;
+        }
     }
 
     return res.status(statusCode).json(response);
