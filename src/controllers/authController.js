@@ -102,13 +102,11 @@ const verifyOtp = async (req, res) => {
         );
 
         return sendSuccess(res, 200, 'Email verified successfully', {
-            user: {
-                id: verifiedUser.id,
-                fullName: verifiedUser.full_name,
-                email: verifiedUser.email,
-                role: verifiedUser.role,
-                isVerified: verifiedUser.is_verified
-            },
+            id: verifiedUser.id,
+            fullName: verifiedUser.full_name,
+            email: verifiedUser.email,
+            role: verifiedUser.role,
+            isVerified: verifiedUser.is_verified,
             token,
         });
 
@@ -146,12 +144,10 @@ const login = async (req, res) => {
         );
 
         return sendSuccess(res, 200, 'Login successful', {
-            user: {
-                id: user.id,
-                fullName: user.full_name,
-                email: user.email,
-                role: user.role,
-            },
+            id: user.id,
+            fullName: user.full_name,
+            email: user.email,
+            role: user.role,
             token,
         });
 
@@ -164,6 +160,7 @@ const login = async (req, res) => {
 const getAllUsers = async (req, res) => {
     try {
         const users = await userModel.findAllUsers();
+        // Since we removed 'data' wrapper in responseHandler, { users: [...] } will result in { success: true, users: [...] }
         return sendSuccess(res, 200, 'Users retrieved successfully', { users });
     } catch (err) {
         console.error(err);

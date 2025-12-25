@@ -20,7 +20,7 @@ const assignPlate = async (req, res) => {
 
         // Assign plate
         const newPlate = await licensePlateModel.createLicensePlate(userId, plateNumber);
-        return sendSuccess(res, 201, 'License plate assigned successfully', { plate: newPlate });
+        return sendSuccess(res, 201, 'License plate assigned successfully', newPlate);
 
     } catch (err) {
         console.error(err);
@@ -37,7 +37,7 @@ const searchPlate = async (req, res) => {
             return sendError(res, 404, 'License plate not found');
         }
 
-        return sendSuccess(res, 200, 'License plate found', { plate });
+        return sendSuccess(res, 200, 'License plate found', plate);
     } catch (err) {
         console.error(err);
         return sendError(res, 500, 'Server error during search', err);
@@ -52,7 +52,7 @@ const getMyPlate = async (req, res) => {
         if (!plate) {
             return sendError(res, 404, 'No license plate assigned to this user');
         }
-        return sendSuccess(res, 200, 'User plate retrieved', { plate });
+        return sendSuccess(res, 200, 'User plate retrieved', plate);
     } catch (err) {
         console.error(err);
         return sendError(res, 500, 'Server error fetching plate', err);
@@ -62,6 +62,7 @@ const getMyPlate = async (req, res) => {
 const getAllPlates = async (req, res) => {
     try {
         const plates = await licensePlateModel.getAllLicensePlates();
+        // Keep lists under a key for clarity, or if lists are requested flat, it's impossible in JSON object root without a key
         return sendSuccess(res, 200, 'All plates retrieved', { plates });
     } catch (err) {
         console.error(err);
