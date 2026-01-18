@@ -86,11 +86,69 @@ const getModelsByMakeId = async (makeId) => {
     return result.rows;
 };
 
+// --- Make Management ---
+
+const createMake = async (name) => {
+    const query = 'INSERT INTO "Make" ("Name") VALUES ($1) RETURNING "Id", "Name"';
+    const result = await db.query(query, [name]);
+    return result.rows[0];
+};
+
+const updateMake = async (id, name) => {
+    const query = 'UPDATE "Make" SET "Name" = $1 WHERE "Id" = $2 RETURNING "Id", "Name"';
+    const result = await db.query(query, [name, id]);
+    return result.rows[0];
+};
+
+const deleteMake = async (id) => {
+    const query = 'DELETE FROM "Make" WHERE "Id" = $1 RETURNING "Id"';
+    const result = await db.query(query, [id]);
+    return result.rows[0];
+};
+
+// --- Model Management ---
+
+const createModel = async (makeId, name, vehicleType = 'Car') => {
+    const query = 'INSERT INTO "Model" ("MakeId", "Name", "VehicleType") VALUES ($1, $2, $3) RETURNING "Id", "Name", "MakeId", "VehicleType"';
+    const result = await db.query(query, [makeId, name, vehicleType]);
+    return result.rows[0];
+};
+
+const updateModel = async (id, name, vehicleType) => {
+    let query = 'UPDATE "Model" SET "Name" = $1';
+    const params = [name];
+    let paramCount = 2;
+
+    if (vehicleType) {
+        query += `, "VehicleType" = $${paramCount}`;
+        params.push(vehicleType);
+        paramCount++;
+    }
+
+    query += ` WHERE "Id" = $${paramCount} RETURNING "Id", "Name", "MakeId", "VehicleType"`;
+    params.push(id);
+
+    const result = await db.query(query, params);
+    return result.rows[0];
+};
+
+const deleteModel = async (id) => {
+    const query = 'DELETE FROM "Model" WHERE "Id" = $1 RETURNING "Id"';
+    const result = await db.query(query, [id]);
+    return result.rows[0];
+};
+
 module.exports = {
     createVehicle,
     findVehicleByPlate,
     findVehiclesByUserId,
     getAllVehicles,
     getAllMakes,
-    getModelsByMakeId
+    getModelsByMakeId,
+    createMake,
+    updateMake,
+    deleteMake,
+    createModel,
+    updateModel,
+    deleteModel
 };

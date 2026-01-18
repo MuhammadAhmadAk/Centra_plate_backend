@@ -110,11 +110,110 @@ const getModels = async (req, res) => {
     }
 };
 
+// --- Make Management ---
+
+const addMake = async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name) return sendError(res, 400, 'Make name is required');
+
+        const newMake = await vehicleModel.createMake(name);
+        return sendSuccess(res, 201, 'Make added successfully', newMake);
+    } catch (err) {
+        console.error(err);
+        return sendError(res, 500, 'Server error adding make', err);
+    }
+};
+
+const updateMake = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        if (!name) return sendError(res, 400, 'Make name is required');
+
+        const updatedMake = await vehicleModel.updateMake(id, name);
+        if (!updatedMake) return sendError(res, 404, 'Make not found');
+
+        return sendSuccess(res, 200, 'Make updated successfully', updatedMake);
+    } catch (err) {
+        console.error(err);
+        return sendError(res, 500, 'Server error updating make', err);
+    }
+};
+
+const deleteMake = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedMake = await vehicleModel.deleteMake(id);
+        if (!deletedMake) return sendError(res, 404, 'Make not found');
+
+        return sendSuccess(res, 200, 'Make deleted successfully', null);
+    } catch (err) {
+        console.error(err);
+        if (err.code === '23503') { // Foreign key violation
+            return sendError(res, 400, 'Cannot delete make because it has associated models or vehicles');
+        }
+        return sendError(res, 500, 'Server error deleting make', err);
+    }
+};
+
+// --- Model Management ---
+
+const addModel = async (req, res) => {
+    try {
+        const { makeId, name, vehicleType } = req.body;
+        if (!makeId || !name) return sendError(res, 400, 'MakeId and Model name are required');
+
+        const newModel = await vehicleModel.createModel(makeId, name, vehicleType);
+        return sendSuccess(res, 201, 'Model added successfully', newModel);
+    } catch (err) {
+        console.error(err);
+        return sendError(res, 500, 'Server error adding model', err);
+    }
+};
+
+const updateModel = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, vehicleType } = req.body;
+
+        const updatedModel = await vehicleModel.updateModel(id, name, vehicleType);
+        if (!updatedModel) return sendError(res, 404, 'Model not found');
+
+        return sendSuccess(res, 200, 'Model updated successfully', updatedModel);
+    } catch (err) {
+        console.error(err);
+        return sendError(res, 500, 'Server error updating model', err);
+    }
+};
+
+const deleteModel = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedModel = await vehicleModel.deleteModel(id);
+        if (!deletedModel) return sendError(res, 404, 'Model not found');
+
+        return sendSuccess(res, 200, 'Model deleted successfully', null);
+    } catch (err) {
+        console.error(err);
+        if (err.code === '23503') {
+            return sendError(res, 400, 'Cannot delete model because it has associated vehicles');
+        }
+        return sendError(res, 500, 'Server error deleting model', err);
+    }
+};
+
 module.exports = {
     addVehicle,
     searchPlate,
     getMyVehicles,
     getAllVehicles,
     getMakes,
-    getModels
+    getModels,
+    addMake,
+    updateMake,
+    deleteMake,
+    addModel,
+    updateModel,
+    deleteModel
 };
