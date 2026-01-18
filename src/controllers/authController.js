@@ -1,71 +1,65 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const userModel = require('../models/userModel');
 require('dotenv').config();
 
+const userModel = require('../models/userModel');
+const userOtpModel = require('../models/userOtpModel');
+const vehicleModel = require('../models/vehicleModel');
 const sendEmail = require('../utils/sendEmail');
-const licensePlateModel = require('../models/licensePlateModel');
 const { sendSuccess, sendError } = require('../utils/responseHandler');
 
 const register = async (req, res) => {
+    // console.log logs removed for cleaner code
     try {
-        const { fullName, email, password, plateNumber } = req.body;
+        const {
+            displayName,
+            email,
+            password,
+            countryIso,
+            countryName,
+            language,
+            userTypeId
+        } = req.body;
 
-        // Check if user exists
+        if (!displayName || !email || !password || !countryIso || !countryName || !language) {
+            return sendError(res, 400, 'Missing required fields (displayName, email, password, countryIso, countryName, language)');
+        }
+
         const existingUser = await userModel.findUserByEmail(email);
         if (existingUser) {
-            // Optional: If user exists but not verified, we could resend OTP here.
-            // For now, strict check.
             return sendError(res, 400, 'User already exists');
         }
 
-        // Validate Plate if provided
-        if (plateNumber) {
-            const existingPlate = await licensePlateModel.findLicensePlateByNumber(plateNumber);
-            if (existingPlate) {
-                return sendError(res, 400, 'License plate already taken');
-            }
-        }
-
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        // Generate 4-digit OTP excluding 5 and 6
+        const finalUserTypeId = userTypeId || 1;
+
+        const newUser = await userModel.createUser(
+            displayName,
+            email,
+            passwordHash,
+            finalUserTypeId,
+            language,
+            countryIso,
+            countryName
+        );
+
         const allowedDigits = '01234789';
         let otp = '';
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 6; i++) {
             otp += allowedDigits[Math.floor(Math.random() * allowedDigits.length)];
         }
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
-        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+        await userOtpModel.createOtp(newUser.Id, otp, otpExpiresAt);
 
-        // Create user
-        const newUser = await userModel.createUser(fullName, email, passwordHash, 'user', otp, otpExpiresAt);
-
-        // Assign Plate if provided
-        let assignedPlate = null;
-        if (plateNumber) {
-            try {
-                assignedPlate = await licensePlateModel.createLicensePlate(newUser.id, plateNumber);
-            } catch (plateErr) {
-                console.error("Error assigning plate during registration:", plateErr);
-                // Note: User is created but plate failed. We won't rollback user here for simplicity,
-                // but user will have to retry assigning plate later.
-            }
-        }
-
-        // Send OTP Email
         await sendEmail(email, 'Your Verification Code', `Your OTP code is ${otp}. It expires in 10 minutes.`);
 
-        return sendSuccess(res, 201, 'User registered successfully. Please verify your email with the OTP sent.', {
-            userId: newUser.id,
-            email: newUser.email,
-            plate: assignedPlate ? assignedPlate.plate_number : null
-        });
+        return sendSuccess(res, 201, 'User registered successfully. Please verify your email.', newUser);
 
     } catch (err) {
-        console.error(err);
+        console.error('REGISTRATION ERROR:', err);
         return sendError(res, 500, 'Server error during registration', err);
     }
 };
@@ -79,35 +73,40 @@ const verifyOtp = async (req, res) => {
             return sendError(res, 400, 'User not found');
         }
 
-        if (user.is_verified) {
+        // Check if already verified via OTP table
+        const isVerified = await userOtpModel.isUserVerified(user.Id);
+        if (isVerified) {
             return sendError(res, 400, 'User already verified');
         }
 
-        if (user.otp !== otp) {
+        const otpRecord = await userOtpModel.findLatestOtpByUserId(user.Id);
+        if (!otpRecord) {
+            return sendError(res, 400, 'No OTP found or expired');
+        }
+
+        if (otpRecord.Code !== otp) {
             return sendError(res, 400, 'Invalid OTP');
         }
 
-        if (new Date() > new Date(user.otp_expires_at)) {
+        if (new Date() > new Date(otpRecord.ExpiresAtUTC)) {
             return sendError(res, 400, 'OTP expired');
         }
 
-        // Verify User
-        const verifiedUser = await userModel.verifyUser(user.id);
+        // Mark OTP as used
+        await userOtpModel.markOtpAsUsed(otpRecord.Id);
 
-        // Generate token
         const token = jwt.sign(
-            { id: verifiedUser.id, role: verifiedUser.role },
+            { id: user.Id, role: user.Role || 'User' },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
         return sendSuccess(res, 200, 'Email verified successfully', {
             user: {
-                id: verifiedUser.id,
-                fullName: verifiedUser.full_name,
-                email: verifiedUser.email,
-                role: verifiedUser.role,
-                isVerified: verifiedUser.is_verified,
+                id: user.Id,
+                displayName: user.DisplayName,
+                email: user.Email,
+                isVerified: true,
             },
             token,
         });
@@ -122,35 +121,35 @@ const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Find user
         const user = await userModel.findUserByEmail(email);
         if (!user) {
             return sendError(res, 400, 'Invalid credentials');
         }
 
-        if (!user.is_verified) {
+        // Check verification via OTP table
+        const isVerified = await userOtpModel.isUserVerified(user.Id);
+        if (!isVerified) {
             return sendError(res, 403, 'Please verify your email first.');
         }
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password_hash);
+        const isMatch = await bcrypt.compare(password, user.PasswordHash);
         if (!isMatch) {
             return sendError(res, 400, 'Invalid credentials');
         }
 
-        // Generate token
         const token = jwt.sign(
-            { id: user.id, role: user.role },
+            { id: user.Id, role: user.Role || 'User' },
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
         return sendSuccess(res, 200, 'Login successful', {
             user: {
-                id: user.id,
-                fullName: user.full_name,
-                email: user.email,
-                role: user.role,
+                id: user.Id,
+                displayName: user.DisplayName,
+                email: user.Email,
+                role: user.Role,
+                countryName: user.CountryName,
             },
             token,
         });
@@ -164,7 +163,7 @@ const login = async (req, res) => {
 const getAllUsers = async (req, res) => {
     try {
         const users = await userModel.findAllUsers();
-        // Since we removed 'data' wrapper in responseHandler, { users: [...] } will result in { success: true, users: [...] }
+        // Enrich users with verification status if needed, but for list maybe not strictly required or can be added via join
         return sendSuccess(res, 200, 'Users retrieved successfully', { users });
     } catch (err) {
         console.error(err);

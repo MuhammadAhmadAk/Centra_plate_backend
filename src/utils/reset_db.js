@@ -10,26 +10,23 @@ const pool = new Pool({
     }
 });
 
-// Run this ONLY if you checking connection, DO NOT wipe DB every time
-async function bootstrapDatabase() {
+async function resetDatabase() {
     try {
         const client = await pool.connect();
-        // Read and Execute Schema - DISABLED to prevent auto-deletion
-        /*
+        console.log('Connected to PostgreSQL database. Resetting Schema...');
+
         const schemaPath = path.join(__dirname, '../../schema.sql');
         const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+
         await client.query(schemaSql);
-        */
+        console.log('Schema reset successfully.');
 
         client.release();
-        console.log('PostgreSQL Database connected.');
+        process.exit(0);
     } catch (err) {
-        console.error('Database connection failed:', err);
+        console.error('Database reset failed:', err);
         process.exit(1);
     }
 }
 
-module.exports = {
-    query: (text, params) => pool.query(text, params),
-    bootstrapDatabase
-};
+resetDatabase();

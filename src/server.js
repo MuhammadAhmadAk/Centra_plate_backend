@@ -1,21 +1,16 @@
 const express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
+// const socketIo = require('socket.io'); // Socket.io removed
 const cors = require('cors');
 const helmet = require('helmet');
-const messageModel = require('./models/messageModel');
-const licensePlateModel = require('./models/licensePlateModel');
+// const messageModel = require('./models/messageModel'); // Message model removed
+const vehicleModel = require('./models/vehicleModel');
 const db = require('./config/db');
 require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-    cors: {
-        origin: "*", // Configure this accurately for production
-        methods: ["GET", "POST"]
-    }
-});
+// Socket IO initialization removed
 
 // Middleware
 app.use(helmet());
@@ -28,81 +23,12 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to Centra Plate Backend API' });
 });
 
-// Socket.io connection
-io.on('connection', (socket) => {
-    console.log('New client connected:', socket.id);
-
-    // Custom event to join user-specific channel
-    socket.on('identify', async (userId) => {
-        socket.join(`user_${userId}`);
-        console.log(`User ${userId} identified and joined their private room.`);
-
-        // Also join plate room if exists (allows future plate-wide broadcasts)
-        try {
-            const plate = await licensePlateModel.findLicensePlateByUserId(userId);
-            if (plate) {
-                socket.join(`plate_${plate.plate_number}`);
-                console.log(`User ${userId} joined plate room: plate_${plate.plate_number}`);
-            }
-        } catch (err) {
-            console.error('Error joining plate room:', err);
-        }
-    });
-
-    socket.on('send_message', async (data) => {
-        // Expected data: { senderId, receiverId, receiverPlate, content }
-
-        if (!data.senderId || !data.content) {
-            // invalid payload
-            return;
-        }
-
-        let targetUserId = data.receiverId;
-
-        try {
-            // Priority 1: If Plate provided, resolve to User
-            if (data.receiverPlate) {
-                const plate = await licensePlateModel.findLicensePlateByNumber(data.receiverPlate);
-                if (plate) {
-                    targetUserId = plate.user_id;
-                } else if (!targetUserId) {
-                    // Only error if we didn't also have a receiverId fallback
-                    socket.emit('error', { message: 'License plate not found' });
-                    return;
-                }
-            }
-
-            if (!targetUserId) {
-                socket.emit('error', { message: 'Receiver not specified or found' });
-                return;
-            }
-
-            // Save to DB
-            const savedMessage = await messageModel.createMessage(data.senderId, targetUserId, data.content);
-
-            // Emit to receiver's User Room
-            io.to(`user_${targetUserId}`).emit('receive_message', savedMessage);
-
-            // Emit confirmation to sender
-            socket.emit('message_sent', savedMessage);
-
-        } catch (err) {
-            console.error('Error saving message:', err);
-            socket.emit('error', { message: 'Server error processing message' });
-        }
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
-    });
-});
-
-// Routes (Placeholders for now)
+// Routes
 const authRoutes = require('./routes/authRoutes');
-const licensePlateRoutes = require('./routes/licensePlateRoutes');
+const vehicleRoutes = require('./routes/vehicleRoutes');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/plates', licensePlateRoutes);
+app.use('/api/vehicles', vehicleRoutes);
 
 const seedAdmin = require('./utils/seedAdmin');
 const PORT = process.env.PORT || 3000;
@@ -110,7 +36,11 @@ const PORT = process.env.PORT || 3000;
 // Initialize DB and then start server
 db.bootstrapDatabase().then(async () => {
     // Seed Admin
-    await seedAdmin();
+    try {
+        await seedAdmin();
+    } catch (e) {
+        console.error("Seeding admin failed (maybe already exists or schema mismatch):", e);
+    }
 
     server.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);

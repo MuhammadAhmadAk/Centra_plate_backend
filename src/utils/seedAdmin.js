@@ -1,43 +1,51 @@
 const bcrypt = require('bcrypt');
 const userModel = require('../models/userModel');
+const userOtpModel = require('../models/userOtpModel');
 
 const seedAdmin = async () => {
     try {
         const adminEmail = 'admin@admin.com';
         const adminPassword = 'admin';
-        const adminRole = 'admin';
+        const adminTypeId = 2; // Admin
+        const language = 'English';
+        const countryIso = 'US';
+        const countryName = 'United States';
 
-        // Check if admin exists
         const existingAdmin = await userModel.findUserByEmail(adminEmail);
         if (existingAdmin) {
             console.log('Admin user already exists.');
             return;
         }
 
-        // Hash password
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(adminPassword, salt);
 
-        // Create admin user
-        // Note: OTP fields are null, verified is true
-        // createUser signature: (fullName, email, passwordHash, role, otp, otpExpiresAt)
-        // We'll trust that createUser sets default values or handles nulls, 
-        // but model currently expects them. We should adjust logic or provide nulls.
+        const newAdmin = await userModel.createUser(
+            'Super Admin',
+            adminEmail,
+            passwordHash,
+            adminTypeId,
+            language,
+            countryIso,
+            countryName
+        );
 
-        // Actually, userModel.createUser returns just the user.
-        // We need to ensure is_verified is TRUE.
-
-        const newAdmin = await userModel.createUser('Super Admin', adminEmail, passwordHash, adminRole, null, null);
-
-        // Manually verify admin
-        await userModel.verifyUser(newAdmin.id);
+        // Create a 'Redeemed' OTP for admin to verify them
+        const fakeOtp = '000000';
+        const expiresAt = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
+        const otpRecord = await userOtpModel.createOtp(newAdmin.Id, fakeOtp, expiresAt);
+        await userOtpModel.markOtpAsUsed(otpRecord.Id);
 
         console.log('Admin user created successfully.');
         console.log(`Email: ${adminEmail}`);
         console.log(`Password: ${adminPassword}`);
 
     } catch (err) {
-        console.error('Error seeding admin user:', err);
+        if (err.code === '23505') {
+            console.log('Admin user already exists (Constraint violation).');
+        } else {
+            console.error('Error seeding admin user:', err);
+        }
     }
 };
 

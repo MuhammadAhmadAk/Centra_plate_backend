@@ -1,42 +1,48 @@
 const db = require('../config/db');
 
-const createUser = async (fullName, email, passwordHash, role = 'user', otp = null, otpExpiresAt = null) => {
+// Create user
+const createUser = async (displayName, email, passwordHash, userTypeId, language, countryIso, countryName) => {
     const query = `
-    INSERT INTO users (full_name, email, password_hash, role, otp, otp_expires_at)
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING id, full_name, email, role, created_at, is_verified;
+    INSERT INTO "User" ("DisplayName", "Email", "PasswordHash", "UserTypeId", "Language", "CountryIso", "CountryName")
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING "Id", "DisplayName", "Email", "UserTypeId", "CreatedAtUTC";
   `;
-    const values = [fullName, email, passwordHash, role, otp, otpExpiresAt];
+    const values = [displayName, email, passwordHash, userTypeId, language, countryIso, countryName];
     const result = await db.query(query, values);
     return result.rows[0];
 };
 
-const verifyUser = async (id) => {
-    const query = 'UPDATE users SET is_verified = TRUE, otp = NULL, otp_expires_at = NULL WHERE id = $1 RETURNING id, full_name, email, role, is_verified';
-    const result = await db.query(query, [id]);
-    return result.rows[0];
-};
-
-const updateUserOtp = async (id, otp, otpExpiresAt) => {
-    const query = 'UPDATE users SET otp = $1, otp_expires_at = $2 WHERE id = $3 RETURNING id';
-    const result = await db.query(query, [otp, otpExpiresAt, id]);
-    return result.rows[0];
-};
-
+// Find by email
 const findUserByEmail = async (email) => {
-    const query = 'SELECT * FROM users WHERE email = $1';
+    const query = `
+        SELECT u.*, ut."Type" as "Role" 
+        FROM "User" u 
+        LEFT JOIN "UserType" ut ON u."UserTypeId" = ut."Id" 
+        WHERE "Email" = $1
+    `;
     const result = await db.query(query, [email]);
     return result.rows[0];
 };
 
+// Find by ID
 const findUserById = async (id) => {
-    const query = 'SELECT id, full_name, email, role FROM users WHERE id = $1';
+    const query = `
+        SELECT u."Id", u."DisplayName", u."Email", u."UserTypeId", ut."Type" as "Role", u."CountryIso", u."CountryName" 
+        FROM "User" u
+        LEFT JOIN "UserType" ut ON u."UserTypeId" = ut."Id"
+        WHERE u."Id" = $1
+    `;
     const result = await db.query(query, [id]);
     return result.rows[0];
 };
 
+// Get all users
 const findAllUsers = async () => {
-    const query = 'SELECT id, full_name, email, role, is_verified, created_at, otp_expires_at FROM users';
+    const query = `
+        SELECT u."Id", u."DisplayName", u."Email", ut."Type" as "Role", u."CreatedAtUTC", u."CountryIso", u."CountryName" 
+        FROM "User" u
+        LEFT JOIN "UserType" ut ON u."UserTypeId" = ut."Id"
+    `;
     const result = await db.query(query);
     return result.rows;
 };
@@ -45,7 +51,5 @@ module.exports = {
     createUser,
     findUserByEmail,
     findUserById,
-    verifyUser,
-    updateUserOtp,
     findAllUsers,
 };

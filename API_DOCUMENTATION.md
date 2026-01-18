@@ -1,320 +1,243 @@
-# Centra Plate Backend API Documentation
+# Centra Plate API Documentation
 
-This documentation provides details on how to use the API endpoints for testing, including request bodies and example responses.
+Base URL: `http://localhost:3000/api`
 
-**Base URL**: `https://required-minetta-syntaxsoftwarehouse-63c67cf1.koyeb.app`
+## Authentication
 
----
+### 1. Register User
+**Endpoint:** `POST /auth/register`
+**Description:** Create a new user account. Warning: `Verified` starts as `false`.
 
-## **1. Authentication**
-
-### **1.1 Register User**
-Registers a new user. Optionally, you can assign a license plate during registration.
-
-*   **URL**: `/api/auth/register`
-*   **Method**: `POST`
-*   **Auth Required**: No
-
-**Request Body (JSON):**
-
+**Request Body:**
 ```json
 {
-  "fullName": "John Doe",
-  "email": "john.doe@example.com",
-  "password": "SecurePassword123!",
-  "plateNumber": "ABC-123" 
+  "displayName": "Tariq Khan",
+  "email": "tariq@example.com",
+  "password": "MySecretPassword123",
+  "countryIso": "PK",
+  "countryName": "Pakistan",
+  "language": "English",
+  "userTypeId": 1
 }
 ```
-*   `plateNumber` is **optional**.
+*Note: `userTypeId` (default 1) is optional.*
 
 **Success Response (201 Created):**
-
 ```json
 {
-  "success": true,
-  "message": "User registered successfully. Please verify your email with the OTP sent.",
-  "data": {
-    "userId": 15,
-    "email": "john.doe@example.com",
-    "plate": "ABC-123"
-  }
+    "status": true,
+    "message": "User registered successfully. Please verify your email.",
+    "data": {
+        "userId": 5,
+        "email": "tariq@example.com"
+    }
 }
 ```
 
-**Error Response (400 Bad Request):**
+### 2. Verify OTP
+**Endpoint:** `POST /auth/verify-otp`
+**Description:** Verify email using the 6-digit code received.
 
+**Request Body:**
 ```json
 {
-  "success": false,
-  "message": "User already exists"
-}
-```
-
----
-
-### **1.2 Verify OTP**
-Verifies the user's email address using the OTP sent during registration.
-
-*   **URL**: `/api/auth/verify-otp`
-*   **Method**: `POST`
-*   **Auth Required**: No
-
-**Request Body (JSON):**
-
-```json
-{
-  "email": "john.doe@example.com",
-  "otp": "1234"
+  "email": "tariq@example.com",
+  "otp": "123478"
 }
 ```
 
 **Success Response (200 OK):**
-
 ```json
 {
-  "success": true,
-  "message": "Email verified successfully",
-  "data": {
-    "user": {
-      "id": 15,
-      "fullName": "John Doe",
-      "email": "john.doe@example.com",
-      "role": "user",
-      "isVerified": 1
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsIn..."
-  }
+    "success": true,
+    "message": "Email verified successfully",
+    "data": {
+        "user": {
+            "id": 5,
+            "displayName": "Tariq Khan",
+            "email": "tariq@example.com",
+            "isVerified": true
+        },
+        "token": "eyJhbGciOiJIUzI1NiIsInR..."
+    }
 }
 ```
 
-**Error Response (400 Bad Request):**
+### 3. Login
+**Endpoint:** `POST /auth/login`
+**Description:** Login to get JWT access token.
 
+**Request Body:**
 ```json
 {
-  "success": false,
-  "message": "Invalid OTP"
-}
-```
-
----
-
-### **1.3 Login**
-Authenticates a user and returns a JWT token.
-
-*   **URL**: `/api/auth/login`
-*   **Method**: `POST`
-*   **Auth Required**: No
-
-**Request Body (JSON):**
-
-```json
-{
-  "email": "john.doe@example.com",
-  "password": "SecurePassword123!"
+  "email": "tariq@example.com",
+  "password": "MySecretPassword123"
 }
 ```
 
 **Success Response (200 OK):**
-
 ```json
 {
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "user": {
-      "id": 15,
-      "fullName": "John Doe",
-      "email": "john.doe@example.com",
-      "role": "user"
-    },
-    "token": "eyJhbGciOiJIUzI1NiIsIn..."
-  }
-}
-```
-
-**Error Response (403 Forbidden - Not Verified):**
-
-```json
-{
-  "success": false,
-  "message": "Please verify your email first."
+    "success": true,
+    "message": "Login successful",
+    "data": {
+        "user": {
+            "id": 5,
+            "displayName": "Tariq Khan",
+            "email": "tariq@example.com",
+            "role": "User",
+            "countryName": "Pakistan"
+        },
+        "token": "eyJhbGciOiJIUzI1NiIsInR..."
+    }
 }
 ```
 
 ---
 
-### **1.4 Get All Users**
-Retrieves a list of all registered users.
+## Vehicles (Requires Login)
 
-*   **URL**: `/api/auth/all-users`
-*   **Method**: `GET`
-*   **Auth Required**: **Yes** (Bearer Token)
-*   **Headers**: `Authorization: Bearer <your_jwt_token>`
+**Header for these requests:**
+`Authorization`: `Bearer <Your_JWT_Token>`
 
-**Success Response (200 OK):**
+### 4. Add Vehicle
+**Endpoint:** `POST /vehicles/add`
+**Description:** Register a new vehicle.
 
+**Request Body:**
 ```json
 {
-  "success": true,
-  "message": "Users retrieved successfully",
-  "data": {
-    "users": [
-      {
-        "id": 1,
-        "full_name": "Admin User",
-        "email": "admin@centra.com",
-        "role": "admin",
-        "is_verified": 1
-      },
-      {
-        "id": 15,
-        "full_name": "John Doe",
-        "email": "john.doe@example.com",
-        "role": "user",
-        "is_verified": 1
-      }
-    ]
-  }
-}
-```
-
----
-
-## **2. License Plates**
-
-### **2.1 Assign Plate**
-Assigns a license plate to the authenticated user.
-
-*   **URL**: `/api/plates/assign`
-*   **Method**: `POST`
-*   **Auth Required**: **Yes** (Bearer Token)
-*   **Headers**: `Authorization: Bearer <your_jwt_token>`
-
-**Request Body (JSON):**
-
-```json
-{
-  "plateNumber": "XYZ-999"
+  "licensePlate": "NYC-2025",
+  "countryIso": "US",
+  "vehicleType": "Car", 
+  "makeId": 1,
+  "modelId": 2
 }
 ```
 
 **Success Response (201 Created):**
-
 ```json
 {
-  "success": true,
-  "message": "License plate assigned successfully",
-  "data": {
-    "plate": {
-      "id": 5,
-      "user_id": 15,
-      "plate_number": "XYZ-999",
-      "created_at": "2024-12-25T10:00:00.000Z"
+    "success": true,
+    "message": "Vehicle added successfully",
+    "data": {
+        "Id": 12,
+        "UserId": 5,
+        "LicensePlate": "NYC-2025",
+        "CountryIso": "US",
+        "VehicleType": "Car",
+        "MakeId": 1,
+        "ModelId": 2,
+        "CreatedAtUTC": "2026-01-18T12:00:00.000Z"
     }
-  }
 }
 ```
 
-**Error Response (400 Bad Request):**
-
-```json
-{
-  "success": false,
-  "message": "User already has a license plate assigned"
-}
-```
-
----
-
-### **2.2 Get My Plate**
-Retrieves the license plate assigned to the currently logged-in user.
-
-*   **URL**: `/api/plates/my-plate`
-*   **Method**: `GET`
-*   **Auth Required**: **Yes** (Bearer Token)
-*   **Headers**: `Authorization: Bearer <your_jwt_token>`
+### 5. Get My Vehicles
+**Endpoint:** `GET /vehicles/my-vehicles`
+**Description:** Get list of vehicles owned by logged-in user.
 
 **Success Response (200 OK):**
-
 ```json
 {
-  "success": true,
-  "message": "User plate retrieved",
-  "data": {
-    "plate": {
-      "id": 5,
-      "user_id": 15,
-      "plate_number": "XYZ-999",
-      "created_at": "2024-12-25T10:00:00.000Z"
-    }
-  }
-}
-```
-
----
-
-### **2.3 Search Plate**
-Search for a license plate by its number to see if it exists.
-
-*   **URL**: `/api/plates/search/:plateNumber`
-*   **Method**: `GET`
-*   **Auth Required**: **Yes** (Bearer Token)
-*   **Headers**: `Authorization: Bearer <your_jwt_token>`
-*   **Example URL**: `/api/plates/search/XYZ-999`
-
-**Success Response (200 OK):**
-
-```json
-{
-  "success": true,
-  "message": "License plate found",
-  "data": {
-    "plate": {
-      "id": 5,
-      "user_id": 15,
-      "plate_number": "XYZ-999"
-    }
-  }
-}
-```
-
-**Error Response (404 Not Found):**
-
-```json
-{
-  "success": false,
-  "message": "License plate not found"
-}
-```
-
----
-
-### **2.4 Get All Plates**
-Retrieves a list of all license plates.
-
-*   **URL**: `/api/plates/all`
-*   **Method**: `GET`
-*   **Auth Required**: No (Public)
-
-**Success Response (200 OK):**
-
-```json
-{
-  "success": true,
-  "message": "All plates retrieved",
-  "data": {
-    "plates": [
-      {
-        "id": 1,
-        "user_id": 10,
-        "plate_number": "ADMIN-1"
-      },
-      {
-        "id": 5,
-        "user_id": 15,
-        "plate_number": "XYZ-999"
-      }
+    "success": true,
+    "message": "User vehicles retrieved",
+    "data": [
+        {
+            "Id": 12,
+            "LicensePlate": "NYC-2025",
+            "MakeName": "Toyota",
+            "ModelName": "Camry"
+        }
     ]
-  }
+}
+```
+
+### 6. Search Vehicle (Global)
+**Endpoint:** `GET /vehicles/search/:plateNumber`
+**Example:** `GET /vehicles/search/XYZ-888`
+**Description:** Find info about a specific license plate.
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Vehicle found",
+    "data": {
+        "Id": 33,
+        "LicensePlate": "XYZ-888",
+        "CountryIso": "US",
+        "VehicleType": "Truck",
+        "MakeName": "Ford",
+        "ModelName": "F-150"
+    }
+}
+```
+
+---
+
+## Public Data
+
+### 7. Get All Vehicles (Test Route)
+**Endpoint:** `GET /vehicles/all`
+
+**Success Response:**
+```json
+{
+    "success": true,
+    "data": {
+        "vehicles": [ ... ]
+    }
+}
+```
+
+### 8. Get Makes (Lookup)
+**Endpoint:** `GET /vehicles/makes`
+**Description:** Get list of all car manufacturers.
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Makes retrieved successfully",
+    "data": [
+        {
+            "Id": 1,
+            "Name": "Toyota"
+        },
+        {
+            "Id": 2,
+            "Name": "Honda"
+        }
+    ]
+}
+```
+
+### 9. Get Models (Lookup)
+**Endpoint:** `GET /vehicles/models?makeId=1`
+**Description:** Get list of models for a specific manufacturer.
+
+**Query Parameters:**
+*   `makeId`: The ID of the make (e.g. 1).
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Models retrieved successfully",
+    "data": [
+        {
+            "Id": 101,
+            "Name": "Corolla",
+            "VehicleType": "Car",
+            "MakeId": 1
+        },
+        {
+            "Id": 102,
+            "Name": "Camry",
+            "VehicleType": "Car",
+            "MakeId": 1
+        }
+    ]
 }
 ```

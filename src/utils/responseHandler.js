@@ -10,16 +10,12 @@
  */
 const sendSuccess = (res, statusCode, message, data = null) => {
     const response = {
-        success: true,
+        status: true,
         message: message || 'Operation completed successfully.',
     };
 
     if (data !== null && data !== undefined) {
-        if (typeof data === 'object' && !Array.isArray(data)) {
-            Object.assign(response, data);
-        } else {
-            response.data = data;
-        }
+        response.data = data;
     }
 
     return res.status(statusCode).json(response);
@@ -37,7 +33,7 @@ const sendSuccess = (res, statusCode, message, data = null) => {
  */
 const sendError = (res, statusCode, message, error = null) => {
     const response = {
-        success: false,
+        status: false,
         message: message || 'An error occurred.',
     };
 
