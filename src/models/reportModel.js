@@ -28,14 +28,17 @@ const exportUsers = async (filters = {}, fields = []) => {
 
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
-    // Default fields if none specified
-    const selectFields = fields.length > 0
-        ? fields.map(f => `u."${f}"`).join(', ')
-        : 'u."Id", u."DisplayName", u."Email", ut."Type" as "Role", u."CountryIso", u."CountryName", u."CreatedAtUTC"';
-
+    // Always select all fields and let CSV parser filter
     const query = `
-        SELECT ${selectFields},
-        EXISTS(SELECT 1 FROM "UserOtpVerification" ov WHERE ov."UserId" = u."Id" AND ov."Redeemed" = TRUE) as "IsVerified"
+        SELECT 
+            u."Id",
+            u."DisplayName",
+            u."Email",
+            ut."Type" as "Role",
+            u."CountryIso",
+            u."CountryName",
+            u."CreatedAtUTC",
+            EXISTS(SELECT 1 FROM "UserOtpVerification" ov WHERE ov."UserId" = u."Id" AND ov."Redeemed" = TRUE) as "IsVerified"
         FROM "User" u
         LEFT JOIN "UserType" ut ON u."UserTypeId" = ut."Id"
         ${whereClause}
