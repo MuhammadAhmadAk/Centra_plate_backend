@@ -39,9 +39,11 @@ const findUserById = async (id) => {
 // Get all users
 const findAllUsers = async () => {
     const query = `
-        SELECT u."Id", u."DisplayName", u."Email", ut."Type" as "Role", u."CreatedAtUTC", u."CountryIso", u."CountryName" 
+        SELECT u."Id", u."DisplayName", u."Email", ut."Type" as "Role", u."CreatedAtUTC", u."CountryIso", u."CountryName",
+        EXISTS(SELECT 1 FROM "UserOtpVerification" ov WHERE ov."UserId" = u."Id" AND ov."Redeemed" = TRUE) as "IsVerified"
         FROM "User" u
         LEFT JOIN "UserType" ut ON u."UserTypeId" = ut."Id"
+        ORDER BY u."CreatedAtUTC" DESC
     `;
     const result = await db.query(query);
     return result.rows;
