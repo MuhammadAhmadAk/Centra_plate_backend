@@ -1,4 +1,5 @@
 const vehicleModel = require('../models/vehicleModel');
+const searchLogModel = require('../models/searchLogModel');
 const { sendSuccess, sendError } = require('../utils/responseHandler');
 
 const addVehicle = async (req, res) => {
@@ -29,7 +30,26 @@ const addVehicle = async (req, res) => {
 const searchPlate = async (req, res) => {
     try {
         const { plateNumber } = req.params;
+        const userId = req.user.id;
+
         const vehicle = await vehicleModel.findVehicleByPlate(plateNumber);
+
+        // Log the search (even if not found)
+        try {
+            await searchLogModel.createSearchLog(
+                userId,
+                plateNumber,
+                vehicle?.CountryIso || 'XX',
+                vehicle?.Details?.Make?.Id || null,
+                vehicle?.Details?.Model?.Id || null,
+                vehicle?.Details?.VehicleType || null,
+                null, // colorId
+                1 // typeMatchId (Exact)
+            );
+        } catch (logErr) {
+            console.error('Error logging search:', logErr);
+            // Don't fail the request if logging fails
+        }
 
         if (!vehicle) {
             return sendError(res, 404, 'Vehicle not found');

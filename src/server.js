@@ -26,9 +26,13 @@ app.get('/', (req, res) => {
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
+const searchLogRoutes = require('./routes/searchLogRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/logs', searchLogRoutes);
+app.use('/api/reports', reportRoutes);
 
 const seedAdmin = require('./utils/seedAdmin');
 const PORT = process.env.PORT || 3000;
