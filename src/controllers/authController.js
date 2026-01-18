@@ -164,7 +164,7 @@ const getAllUsers = async (req, res) => {
     try {
         const users = await userModel.findAllUsers();
         // Enrich users with verification status if needed, but for list maybe not strictly required or can be added via join
-        return sendSuccess(res, 200, 'Users retrieved successfully', { users });
+        return sendSuccess(res, 200, 'Users retrieved successfully', users);
     } catch (err) {
         console.error(err);
         return sendError(res, 500, 'Server error fetching users', err);

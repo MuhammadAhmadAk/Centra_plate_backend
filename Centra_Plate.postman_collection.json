@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "b3f0c9a1-7d8e-4b5c-9f1a-2e3d4e5f6g7h",
 		"name": "Centra Plate API",
-		"description": "API Collection for Centra Plate Backend. Includes Auth, Vehicle Management, and Search.",
+		"description": "API Collection for Centra Plate Backend. Includes Auth, Vehicle Management, Search, and Admin features.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -71,7 +71,7 @@
 							"script": {
 								"exec": [
 									"var jsonData = pm.response.json();",
-									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"if (jsonData.status && jsonData.data && jsonData.data.token) {",
 									"    pm.collectionVariables.set(\"access_token\", jsonData.data.token);",
 									"    console.log(\"Token set successfully\");",
 									"}"
@@ -100,6 +100,81 @@
 							"path": [
 								"auth",
 								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Login as Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.status && jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set(\"admin_token\", jsonData.data.token);",
+									"    console.log(\"Admin Token set successfully\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@admin.com\",\n  \"password\": \"admin\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/all-users",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"all-users"
 							]
 						}
 					},
@@ -280,6 +355,11 @@
 		},
 		{
 			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
 			"value": "",
 			"type": "string"
 		}
