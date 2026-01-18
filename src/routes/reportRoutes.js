@@ -7,5 +7,6 @@ const { authenticateToken, requireAdmin } = require('../middlewares/authMiddlewa
 router.post('/export/users', authenticateToken, requireAdmin, reportController.exportUsers);
 router.post('/export/vehicles', authenticateToken, requireAdmin, reportController.exportVehicles);
 router.post('/export/logs', authenticateToken, requireAdmin, reportController.exportSearchLogs);
+router.get('/history', authenticateToken, requireAdmin, reportController.getExportHistory);
 
 module.exports = router;

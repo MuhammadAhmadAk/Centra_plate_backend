@@ -138,6 +138,24 @@ CREATE TABLE "VehicleSearchHistory" (
     CONSTRAINT "FK_History_TypeMatch" FOREIGN KEY ("TypeMatchId") REFERENCES "TypeMatch"("Id")
 );
 
+-- 10. ExportHistory
+CREATE TABLE "ExportHistory" (
+    "Id" INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    "ExportId" VARCHAR(50) UNIQUE NOT NULL,
+    "Type" VARCHAR(20) NOT NULL,
+    "Format" VARCHAR(10) NOT NULL DEFAULT 'csv',
+    "Status" VARCHAR(20) NOT NULL DEFAULT 'completed',
+    "RecordCount" INT DEFAULT 0,
+    "FileSizeBytes" INT DEFAULT 0,
+    "FileName" VARCHAR(255),
+    "ErrorMessage" TEXT,
+    "CreatedByUserId" INT NOT NULL,
+    "CreatedAtUTC" TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'UTC'),
+    "ExpiresAtUTC" TIMESTAMP,
+    
+    CONSTRAINT "FK_Export_User" FOREIGN KEY ("CreatedByUserId") REFERENCES "User"("Id") ON DELETE CASCADE
+);
+
 -- SEED DATA --
 
 -- Make
