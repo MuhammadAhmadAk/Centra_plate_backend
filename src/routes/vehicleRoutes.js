@@ -23,6 +23,9 @@ router.delete('/models/:id', authenticateToken, requireAdmin, vehicleController.
 // Public or Protected
 router.get('/search/:plateNumber', authenticateToken, vehicleController.searchPlate);
 
+// Public route to get all vehicles
+router.get('/all', vehicleController.getAllVehicles);
+
 // Public route to get all
 // router.get('/all', vehicleController.getAllVehicles); // commented out: heavy/duplicate endpoint
 

@@ -6,14 +6,19 @@ const MODEL_JSON_SQL = `CASE WHEN mod."Id" IS NOT NULL THEN json_build_object('I
 
 // Create Vehicle
 const createVehicle = async (userId, licensePlate, countryIso, vehicleType = null, makeId = null, modelId = null) => {
-    const query = `
-    INSERT INTO "Vehicle" ("UserId", "LicensePlate", "CountryIso", "VehicleType", "MakeId", "ModelId")
-    VALUES ($1, $2, $3, $4, $5, $6)
-    RETURNING *;
-  `;
-    const values = [userId, licensePlate, countryIso, vehicleType, makeId, modelId];
-    const result = await db.query(query, values);
-    return result.rows[0];
+        // Normalize license plate to meet DB check constraint (uppercase, trimmed)
+        const normalizedPlate = licensePlate && typeof licensePlate === 'string'
+                ? licensePlate.trim().toUpperCase()
+                : licensePlate;
+
+        const query = `
+        INSERT INTO "Vehicle" ("UserId", "LicensePlate", "CountryIso", "VehicleType", "MakeId", "ModelId")
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *;
+    `;
+        const values = [userId, normalizedPlate, countryIso, vehicleType, makeId, modelId];
+        const result = await db.query(query, values);
+        return result.rows[0];
 };
 
 // Find by Plate
@@ -80,10 +85,22 @@ const getAllMakes = async () => {
     return result.rows;
 };
 
+const getMakeById = async (makeId) => {
+    const query = 'SELECT "Id", "Name" FROM "Make" WHERE "Id" = $1';
+    const result = await db.query(query, [makeId]);
+    return result.rows[0];
+};
+
 const getModelsByMakeId = async (makeId) => {
     const query = 'SELECT "Id", "Name" FROM "Model" WHERE "MakeId" = $1 ORDER BY "Name" ASC';
     const result = await db.query(query, [makeId]);
     return result.rows;
+};
+
+const getModelById = async (modelId) => {
+    const query = 'SELECT "Id", "Name", "MakeId", "VehicleType" FROM "Model" WHERE "Id" = $1';
+    const result = await db.query(query, [modelId]);
+    return result.rows[0];
 };
 
 // --- Make Management ---
@@ -144,7 +161,9 @@ module.exports = {
     findVehiclesByUserId,
     getAllVehicles,
     getAllMakes,
+    getMakeById,
     getModelsByMakeId,
+        getModelById,
     createMake,
     updateMake,
     deleteMake,

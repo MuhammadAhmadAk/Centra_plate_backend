@@ -13,7 +13,25 @@ const addVehicle = async (req, res) => {
 
         try {
             const newVehicle = await vehicleModel.createVehicle(userId, licensePlate, countryIso, vehicleType, makeId, modelId);
-            return sendSuccess(res, 201, 'Vehicle added successfully', newVehicle);
+            const make= await vehicleModel.getMakeById(makeId);
+            const model= await vehicleModel.getModelById(modelId);
+            
+        var newv = {
+                Id: newVehicle.Id,
+                LicensePlate: newVehicle.LicensePlate,
+                CountryIso: newVehicle.CountryIso,
+                VehicleType: newVehicle.VehicleType,
+                make:{
+                    Id: make.Id,
+                    Name: make.Name,
+                    model:{
+                        Id: model.Id,
+                        Name: model.Name
+                    }
+                }
+               
+        }
+            return sendSuccess(res, 201, 'Vehicle added successfully', newv);
         } catch (dbErr) {
             if (dbErr.code === '23505') {
                 return sendError(res, 400, 'This license plate is already registered in this country');
@@ -66,18 +84,60 @@ const getMyVehicles = async (req, res) => {
     try {
         const userId = req.user.id;
         const vehicles = await vehicleModel.findVehiclesByUserId(userId);
-        // Always return success even if empty array, easier for frontend
-        return sendSuccess(res, 200, 'User vehicles retrieved', vehicles || []);
+
+        const formatted = (vehicles || []).map(v => {
+            const make = v.Details?.Make || null;
+            const model = v.Details?.Model || null;
+
+            return {
+                Id: v.Id,
+                LicensePlate: v.LicensePlate,
+                CountryIso: v.CountryIso,
+                VehicleType: v.Details?.VehicleType || null,
+                make: make ? {
+                    Id: make.Id,
+                    Name: make.Name,
+                    model: model ? { Id: model.Id, Name: model.Name } : null
+                } : null,
+                CreatedAtUTC: v.CreatedAtUTC,
+                ModifiedAtUTC: v.ModifiedAtUTC
+            };
+        });
+
+        return sendSuccess(res, 200, 'User vehicles retrieved', formatted || []);
     } catch (err) {
         console.error(err);
         return sendError(res, 500, 'Server error fetching vehicles', err);
     }
-}
+};
 
 const getAllVehicles = async (req, res) => {
     try {
         const vehicles = await vehicleModel.getAllVehicles();
-        return sendSuccess(res, 200, 'All vehicles retrieved', { vehicles });
+
+        const formatted = (vehicles || []).map(v => {
+            const make = v.Details?.Make || null;
+            const model = v.Details?.Model || null;
+
+            return {
+                Id: v.Id,
+                UserId: v.UserId,
+                LicensePlate: v.LicensePlate,
+                CountryIso: v.CountryIso,
+                VehicleType: v.Details?.VehicleType || null,
+                make: make ? {
+                    Id: make.Id,
+                    Name: make.Name,
+                    model: model ? { Id: model.Id, Name: model.Name } : null
+                } : null,
+                CreatedAtUTC: v.CreatedAtUTC,
+                ModifiedAtUTC: v.ModifiedAtUTC,
+                OwnerDisplayName: v.DisplayName,
+                OwnerEmail: v.Email
+            };
+        });
+
+        return sendSuccess(res, 200, 'All vehicles retrieved', formatted || []);
     } catch (err) {
         console.error(err);
         return sendError(res, 500, 'Server error fetching all vehicles', err);
