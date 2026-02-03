@@ -5,7 +5,7 @@ const { authenticateToken, requireAdmin } = require('../middlewares/authMiddlewa
 
 // Public Data Routes (Lookup)
 router.get('/makes', vehicleController.getMakes);
-router.get('/models', vehicleController.getModels); // ?makeId=1
+// router.get('/models', vehicleController.getModels); // ?makeId=1 - commented out: models now returned with /makes
 
 // Protected routes
 router.post('/add', authenticateToken, vehicleController.addVehicle);
@@ -24,6 +24,6 @@ router.delete('/models/:id', authenticateToken, requireAdmin, vehicleController.
 router.get('/search/:plateNumber', authenticateToken, vehicleController.searchPlate);
 
 // Public route to get all
-router.get('/all', vehicleController.getAllVehicles);
+// router.get('/all', vehicleController.getAllVehicles); // commented out: heavy/duplicate endpoint
 
 module.exports = router;

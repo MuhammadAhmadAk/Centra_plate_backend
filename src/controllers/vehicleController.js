@@ -89,7 +89,17 @@ const getAllVehicles = async (req, res) => {
 const getMakes = async (req, res) => {
     try {
         const makes = await vehicleModel.getAllMakes();
-        return sendSuccess(res, 200, 'Makes retrieved successfully', makes);
+
+        // For each make, fetch its models and attach as a Models array
+        const makesWithModels = await Promise.all((makes || []).map(async (make) => {
+            const models = await vehicleModel.getModelsByMakeId(make.Id);
+            return {
+                ...make,
+                Models: models || []
+            };
+        }));
+
+        return sendSuccess(res, 200, 'Makes retrieved successfully', makesWithModels);
     } catch (err) {
         console.error(err);
         return sendError(res, 500, 'Server error fetching makes', err);
