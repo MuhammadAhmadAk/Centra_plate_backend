@@ -144,13 +144,7 @@ const login = async (req, res) => {
         );
 
         return sendSuccess(res, 200, 'Login successful', {
-            user: {
-                id: user.Id,
-                displayName: user.DisplayName,
-                email: user.Email,
-                role: user.Role,
-                countryName: user.CountryName,
-            },
+            user: user,
             token,
         });
 
