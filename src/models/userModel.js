@@ -27,13 +27,54 @@ const findUserByEmail = async (email) => {
 // Find by ID
 const findUserById = async (id) => {
     const query = `
-        SELECT u."Id", u."DisplayName", u."Email", u."UserTypeId", ut."Type" as "Role", u."CountryIso", u."CountryName" 
+        SELECT u."Id", u."DisplayName", u."Email", u."UserTypeId", ut."Type" as "Role", u."CountryIso", u."CountryName", u."ProfilePicURL", u."Bio", u."CreatedAtUTC"
         FROM "User" u
         LEFT JOIN "UserType" ut ON u."UserTypeId" = ut."Id"
         WHERE u."Id" = $1
     `;
     const result = await db.query(query, [id]);
     return result.rows[0];
+};
+
+// Update user profile
+const updateUser = async (id, data) => {
+    const { displayName, bio, profilePicURL, language, countryIso, countryName } = data;
+    const query = `
+        UPDATE "User"
+        SET "DisplayName" = COALESCE($1, "DisplayName"),
+            "Bio" = COALESCE($2, "Bio"),
+            "ProfilePicURL" = COALESCE($3, "ProfilePicURL"),
+            "Language" = COALESCE($4, "Language"),
+            "CountryIso" = COALESCE($5, "CountryIso"),
+            "CountryName" = COALESCE($6, "CountryName"),
+            "ModifiedAtUTC" = (NOW() AT TIME ZONE 'UTC')
+        WHERE "Id" = $7
+        RETURNING "Id", "DisplayName", "Email", "UserTypeId", "Language", "CountryIso", "CountryName", "ProfilePicURL", "Bio", "CreatedAtUTC";
+    `;
+    const values = [displayName, bio, profilePicURL, language, countryIso, countryName, id];
+    const result = await db.query(query, values);
+    return result.rows[0];
+};
+
+// Update user password
+const updatePassword = async (id, passwordHash) => {
+    const query = `
+        UPDATE "User"
+        SET "PasswordHash" = $1,
+            "ModifiedAtUTC" = (NOW() AT TIME ZONE 'UTC')
+        WHERE "Id" = $2
+    `;
+    await db.query(query, [passwordHash, id]);
+};
+
+// Delete user and related data
+const deleteUser = async (id) => {
+    // 1. Delete user's vehicles (they are SET NULL on delete by default, but user wants them gone)
+    await db.query('DELETE FROM "Vehicle" WHERE "UserId" = $1', [id]);
+
+    // 2. Delete the user (other relations like OTP, History, Export use ON DELETE CASCADE)
+    const result = await db.query('DELETE FROM "User" WHERE "Id" = $1 RETURNING "Id"', [id]);
+    return result.rowCount > 0;
 };
 
 // Get all users
@@ -53,5 +94,8 @@ module.exports = {
     createUser,
     findUserByEmail,
     findUserById,
+    updateUser,
+    updatePassword,
+    deleteUser,
     findAllUsers,
 };

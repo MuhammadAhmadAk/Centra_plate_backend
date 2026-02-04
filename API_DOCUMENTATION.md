@@ -93,6 +93,116 @@ Base URL: `http://localhost:3000/api`
 }
 ```
 
+### 4. Get Profile (Requires Login)
+**Endpoint:** `GET /auth/get-profile`
+**Description:** Get currently logged-in user's profile information.
+
+**Header:**
+`Authorization`: `Bearer <Your_JWT_Token>`
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Profile retrieved successfully",
+    "data": {
+        "Id": 5,
+        "DisplayName": "Tariq Khan",
+        "Email": "tariq@example.com",
+        "UserTypeId": 1,
+        "Role": "User",
+        "CountryIso": "PK",
+        "CountryName": "Pakistan",
+        "ProfilePicURL": null,
+        "CreatedAtUTC": "2026-02-04T18:18:55.000Z"
+    }
+}
+```
+
+### 5. Update Profile (Requires Login)
+**Endpoint:** `PUT /auth/update-profile`
+**Description:** Update currently logged-in user's profile information.
+
+**Header:**
+`Authorization`: `Bearer <Your_JWT_Token>`
+
+**Request Body:**
+```json
+{
+  "displayName": "Tariq K.",
+  "bio": "Software Engineer & Tech Enthusiast",
+  "profilePicURL": "https://example.com/profile.jpg",
+  "language": "Urdu",
+  "countryIso": "PK",
+  "countryName": "Pakistan"
+}
+```
+*Note: All fields are optional. You can update them one by one or all together.*
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Profile updated successfully",
+    "data": {
+        "Id": 5,
+        "DisplayName": "Tariq K.",
+        "Email": "tariq@example.com",
+        "UserTypeId": 1,
+        "Language": "English",
+        "CountryIso": "PK",
+        "CountryName": "Pakistan",
+        "ProfilePicURL": "https://example.com/profile.jpg",
+        "Bio": "Software Engineer & Tech Enthusiast",
+        "CreatedAtUTC": "2026-02-04T18:18:55.000Z"
+    }
+}
+```
+### 6. Change Password (Requires Login)
+**Endpoint:** `POST /auth/change-password`
+**Description:** Change user password.
+
+**Header:**
+`Authorization`: `Bearer <Your_JWT_Token>`
+
+**Request Body:**
+```json
+{
+  "currentPassword": "OldPassword123",
+  "newPassword": "NewSuperSecretPassword456"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Password changed successfully"
+}
+```
+
+### 7. Delete Account (Requires Login)
+**Endpoint:** `DELETE /auth/delete-account`
+**Description:** Permenantly delete user account and all related data (Vehicles, History, etc.).
+
+**Header:**
+`Authorization`: `Bearer <Your_JWT_Token>`
+
+**Request Body:**
+```json
+{
+  "password": "MySecretPassword123"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Account and all related data deleted successfully"
+}
+```
+
 ---
 
 ## Vehicles (Requires Login)

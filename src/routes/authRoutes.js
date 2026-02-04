@@ -9,4 +9,10 @@ router.post('/verify-otp', authController.verifyOtp);
 router.post('/login', authController.login);
 router.get('/all-users', authenticateToken, requireAdmin, authController.getAllUsers);
 
+// Profile routes
+router.get('/get-profile', authenticateToken, authController.getProfile);
+router.put('/update-profile', authenticateToken, authController.updateProfile);
+router.post('/change-password', authenticateToken, authController.changePassword);
+router.delete('/delete-account', authenticateToken, authController.deleteAccount);
+
 module.exports = router;

@@ -102,12 +102,7 @@ const verifyOtp = async (req, res) => {
         );
 
         return sendSuccess(res, 200, 'Email verified successfully', {
-            user: {
-                id: user.Id,
-                displayName: user.DisplayName,
-                email: user.Email,
-                isVerified: true,
-            },
+            user: user,
             token,
         });
 
@@ -165,9 +160,115 @@ const getAllUsers = async (req, res) => {
     }
 };
 
+const getProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const user = await userModel.findUserById(userId);
+        if (!user) {
+            return sendError(res, 404, 'User not found');
+        }
+        return sendSuccess(res, 200, 'Profile retrieved successfully', user);
+    } catch (err) {
+        console.error(err);
+        return sendError(res, 500, 'Server error fetching profile', err);
+    }
+};
+
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { displayName, bio, profilePicURL, language, countryIso, countryName } = req.body;
+
+        const updatedUser = await userModel.updateUser(userId, {
+            displayName,
+            bio,
+            profilePicURL,
+            language,
+            countryIso,
+            countryName
+        });
+
+        if (!updatedUser) {
+            return sendError(res, 404, 'User not found');
+        }
+
+        return sendSuccess(res, 200, 'Profile updated successfully', updatedUser);
+    } catch (err) {
+        console.error(err);
+        return sendError(res, 500, 'Server error updating profile', err);
+    }
+};
+
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return sendError(res, 400, 'Current password and new password are required');
+        }
+
+        const user = await userModel.findUserByEmail(req.user.email || (await userModel.findUserById(userId)).Email);
+
+        // Fetch full user including password hash if findUserById doesn't return it
+        // Actually findUserByEmail returns everything. Let's use ID but we need password hash.
+        const fullUser = await userModel.findUserByEmail((await userModel.findUserById(userId)).Email);
+
+        const isMatch = await bcrypt.compare(currentPassword, fullUser.PasswordHash);
+        if (!isMatch) {
+            return sendError(res, 400, 'Invalid current password');
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(newPassword, salt);
+
+        await userModel.updatePassword(userId, passwordHash);
+
+        return sendSuccess(res, 200, 'Password changed successfully');
+    } catch (err) {
+        console.error(err);
+        return sendError(res, 500, 'Server error changing password', err);
+    }
+};
+
+const deleteAccount = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { password } = req.body;
+
+        if (!password) {
+            return sendError(res, 400, 'Password is required to delete account');
+        }
+
+        const user = await userModel.findUserById(userId);
+        if (!user) {
+            return sendError(404, 'User not found');
+        }
+
+        // Need to get full user to verify password hash
+        const fullUser = await userModel.findUserByEmail(user.Email);
+
+        const isMatch = await bcrypt.compare(password, fullUser.PasswordHash);
+        if (!isMatch) {
+            return sendError(res, 401, 'Invalid password. Account deletion aborted.');
+        }
+
+        await userModel.deleteUser(userId);
+
+        return sendSuccess(res, 200, 'Account and all related data deleted successfully');
+    } catch (err) {
+        console.error(err);
+        return sendError(res, 500, 'Server error during account deletion', err);
+    }
+};
+
 module.exports = {
     register,
     verifyOtp,
     login,
     getAllUsers,
+    getProfile,
+    updateProfile,
+    changePassword,
+    deleteAccount,
 };

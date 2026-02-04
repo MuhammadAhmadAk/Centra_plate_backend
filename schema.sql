@@ -79,6 +79,7 @@ CREATE TABLE "User" (
     "CountryIso" CHAR(2) NOT NULL, 
     "CountryName" VARCHAR(100) NOT NULL,
     "ProfilePicURL" VARCHAR(255),
+    "Bio" TEXT,
     "CreatedAtUTC" TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'UTC'),
     "ModifiedAtUTC" TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'UTC'),
 
