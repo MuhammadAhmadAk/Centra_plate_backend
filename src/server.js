@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const http = require('http');
 // const socketIo = require('socket.io'); // Socket.io removed
 const cors = require('cors');
@@ -17,6 +18,7 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/public', express.static(path.join(__dirname, '../public')));
 
 // Basic Route
 app.get('/', (req, res) => {
@@ -25,6 +27,7 @@ app.get('/', (req, res) => {
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const searchLogRoutes = require('./routes/searchLogRoutes');
 const reportRoutes = require('./routes/reportRoutes');
@@ -33,6 +36,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/logs', searchLogRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/upload', uploadRoutes);
 
 const seedAdmin = require('./utils/seedAdmin');
 const PORT = process.env.PORT || 3000;
