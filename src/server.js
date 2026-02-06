@@ -31,12 +31,14 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const searchLogRoutes = require('./routes/searchLogRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const systemRoutes = require('./routes/systemRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/logs', searchLogRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/system', systemRoutes);
 
 const seedAdmin = require('./utils/seedAdmin');
 const PORT = process.env.PORT || 3000;
