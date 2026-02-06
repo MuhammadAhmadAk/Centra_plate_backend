@@ -177,7 +177,12 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        const { displayName, bio, profilePicURL, language, countryIso, countryName } = req.body;
+        let { displayName, bio, profilePicURL, language, countryIso, countryName } = req.body;
+
+        if (req.file) {
+            const baseUrl = `${req.protocol}://${req.get('host')}`;
+            profilePicURL = `${baseUrl}/public/uploads/${req.file.filename}`;
+        }
 
         const updatedUser = await userModel.updateUser(userId, {
             displayName,

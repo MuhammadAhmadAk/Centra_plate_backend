@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const uploadController = require('../controllers/uploadController');
 
 const { authenticateToken, requireAdmin } = require('../middlewares/authMiddleware');
 
