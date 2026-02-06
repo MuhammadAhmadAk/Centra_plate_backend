@@ -38,7 +38,16 @@ const findUserById = async (id) => {
 
 // Update user profile
 const updateUser = async (id, data) => {
-    const { displayName, bio, profilePicURL, language, countryIso, countryName } = data;
+    let { displayName, bio, profilePicURL, language, countryIso, countryName } = data;
+
+    // Ensure undefined values are passed as null so COALESCE can work
+    displayName = displayName === undefined ? null : displayName;
+    bio = bio === undefined ? null : bio;
+    profilePicURL = profilePicURL === undefined ? null : profilePicURL;
+    language = language === undefined ? null : language;
+    countryIso = countryIso === undefined ? null : countryIso;
+    countryName = countryName === undefined ? null : countryName;
+
     const query = `
         UPDATE "User"
         SET "DisplayName" = COALESCE($1, "DisplayName"),

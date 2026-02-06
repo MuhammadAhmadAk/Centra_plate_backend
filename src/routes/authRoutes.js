@@ -12,7 +12,7 @@ router.get('/all-users', authenticateToken, requireAdmin, authController.getAllU
 
 // Profile routes
 router.get('/get-profile', authenticateToken, authController.getProfile);
-router.put('/update-profile', authenticateToken, authController.updateProfile);
+router.put('/update-profile', authenticateToken, uploadController.upload.single('profileImage'), authController.updateProfile);
 router.post('/change-password', authenticateToken, authController.changePassword);
 router.delete('/delete-account', authenticateToken, authController.deleteAccount);
 

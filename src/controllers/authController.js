@@ -177,7 +177,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const userId = req.user.id;
-        let { displayName, bio, profilePicURL, language, countryIso, countryName } = req.body;
+        let { displayName, bio, profilePicURL, language, countryIso, countryName } = req.body || {};
 
         if (req.file) {
             const baseUrl = `${req.protocol}://${req.get('host')}`;
