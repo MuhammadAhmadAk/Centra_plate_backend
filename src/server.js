@@ -41,7 +41,11 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/system', systemRoutes);
 
 const seedAdmin = require('./utils/seedAdmin');
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
+
+if (!process.env.DATABASE_URL) {
+    console.error("FATAL ERROR: DATABASE_URL is not defined in environment variables.");
+}
 
 // Initialize DB and then start server
 db.bootstrapDatabase().then(async () => {
@@ -49,10 +53,12 @@ db.bootstrapDatabase().then(async () => {
     try {
         await seedAdmin();
     } catch (e) {
-        console.error("Seeding admin failed (maybe already exists or schema mismatch):", e);
+        console.error("Seeding admin failed:", e.message);
     }
 
-    server.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log(`Server is successfully running on port ${PORT}`);
     });
+}).catch(err => {
+    console.error("Failed to start server due to DB connection error:", err);
 });
