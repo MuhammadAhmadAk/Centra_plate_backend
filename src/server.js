@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const http = require('http');
@@ -7,7 +8,6 @@ const helmet = require('helmet');
 // const messageModel = require('./models/messageModel'); // Message model removed
 const vehicleModel = require('./models/vehicleModel');
 const db = require('./config/db');
-require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
