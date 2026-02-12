@@ -41,24 +41,28 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/system', systemRoutes);
 
 const seedAdmin = require('./utils/seedAdmin');
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 4000;
 
-if (!process.env.DATABASE_URL) {
-    console.error("FATAL ERROR: DATABASE_URL is not defined in environment variables.");
-}
+console.log("--- Initializing Centra Plate Backend ---");
+console.log(`Target Port: ${PORT}`);
+console.log(`DATABASE_URL detected: ${process.env.DATABASE_URL ? "YES (Hidden)" : "NO"}`);
 
-// Initialize DB and then start server
+// Start server immediately for health checks
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is proactively listening on port ${PORT}`);
+});
+
+// Initialize DB in background
+console.log("Attempting to connect to PostgreSQL...");
 db.bootstrapDatabase().then(async () => {
-    // Seed Admin
+    console.log("Database connection established.");
     try {
         await seedAdmin();
+        console.log("Admin seeding check completed.");
     } catch (e) {
-        console.error("Seeding admin failed:", e.message);
+        console.error("Seeding admin error:", e.message);
     }
-
-    server.listen(PORT, '0.0.0.0', () => {
-        console.log(`Server is successfully running on port ${PORT}`);
-    });
 }).catch(err => {
-    console.error("Failed to start server due to DB connection error:", err);
+    console.error("CRITICAL: Database connection failed!");
+    console.error("Error details:", err.message);
 });
