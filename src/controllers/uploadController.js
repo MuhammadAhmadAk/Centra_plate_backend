@@ -12,37 +12,38 @@ const storage = multer.diskStorage({
     }
 });
 
-// File filter to allow only images
+// File filter to allow all files
 const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-        cb(null, true);
-    } else {
-        cb(new Error('Only images are allowed!'), false);
-    }
+    cb(null, true);
 };
 
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit
 });
 
-const uploadImage = (req, res) => {
+const uploadFile = (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'Please upload a file' });
     }
 
     // Construct public URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = `${baseUrl}/public/uploads/${req.file.filename}`;
+    const fileUrl = `${baseUrl}/public/uploads/${req.file.filename}`;
 
     res.status(200).json({
         message: 'File uploaded successfully',
-        url: imageUrl
+        data: {
+            url: fileUrl,
+            mimetype: req.file.mimetype,
+            originalname: req.file.originalname,
+            size: req.file.size
+        }
     });
 };
 
 module.exports = {
     upload,
-    uploadImage
+    uploadFile
 };

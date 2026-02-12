@@ -517,45 +517,70 @@ Admin-only endpoints require the user to have `Role: 'Admin'`.
 
 ---
 
-## ⚠️ Error Responses
+## 📤 File Upload
+ 
+ ### 18. Upload File
+ **POST** `/upload` (Supports Audio, Video, Image, Voice Messages, etc.)
+ 
+ **Request Body (Multipart Form-Data):**
+ - `file`: The file to upload (Max 50MB, all file types supported: `.mp3`, `.m4a`, `.mp4`, `.wav`, `.jpg`, `.pdf`, etc.)
+ 
+ **Response (200):**
+ ```json
+ {
+   "message": "File uploaded successfully",
+   "data": {
+     "url": "http://localhost:8000/public/uploads/1739380000000-123456789.mp4",
+     "mimetype": "video/mp4",
+     "originalname": "my_video.mp4",
+     "size": 1048576
+   }
+ }
+ ```
+ 
+ ---
+ 
+ ## ⚠️ Error Responses
+ 
+ All error responses follow this format:
+ 
+ ```json
+ {
+   "status": false,
+   "message": "Error description",
+   "data": null
+ }
+ ```
+ 
+ **Common HTTP Status Codes:**
+ - `400` - Bad Request (validation error)
+ - `401` - Unauthorized (missing/invalid token)
+ - `403` - Forbidden (insufficient permissions)
+ - `404` - Not Found
+ - `500` - Server Error
+ 
+ ---
+ 
+ ## 🔄 Response Format
+ 
+ All successful responses follow this format:
+ 
+ ```json
+ {
+   "status": true,
+   "message": "Success message",
+   "data": { ... }
+ }
+ ```
+ 
+ ---
+ 
+ ## 📝 Notes
+ 
+ 1. **Search Logging**: Every vehicle search is automatically logged in the `VehicleSearchHistory` table.
+ 2. **Admin Access**: Login with `admin@admin.com` / `admin` to get admin token.
+ 3. **Pagination**: Default page size is 10 records.
+ 4. **Date Filters**: Use ISO format (YYYY-MM-DD) for date parameters.
+ 5. **CSV Export**: Returns actual CSV file with appropriate headers.
+ 6. **File Uploads**: Maximum file size is 50MB. All file types are supported. Files are stored in `public/uploads/`.
 
-All error responses follow this format:
-
-```json
-{
-  "status": false,
-  "message": "Error description",
-  "data": null
-}
-```
-
-**Common HTTP Status Codes:**
-- `400` - Bad Request (validation error)
-- `401` - Unauthorized (missing/invalid token)
-- `403` - Forbidden (insufficient permissions)
-- `404` - Not Found
-- `500` - Server Error
-
----
-
-## 🔄 Response Format
-
-All successful responses follow this format:
-
-```json
-{
-  "status": true,
-  "message": "Success message",
-  "data": { ... }
-}
-```
-
----
-
-## 📝 Notes
-
-1. **Search Logging**: Every vehicle search is automatically logged in the `VehicleSearchHistory` table.
-2. **Admin Access**: Login with `admin@admin.com` / `admin` to get admin token.
-3. **Pagination**: Default page size is 10 records.
-4. **Date Filters**: Use ISO format (YYYY-MM-DD) for date parameters.
-5. **CSV Export**: Returns actual CSV file with appropriate headers.
